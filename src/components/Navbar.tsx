@@ -1,6 +1,5 @@
-
-import React, { useState, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, FormEvent, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +16,13 @@ import { useCart } from "@/context/CartContext";
 const Navbar = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { totalItems } = useCart();
+
+  const isActive = (path: string) => location.pathname === path;
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -30,21 +32,40 @@ const Navbar = () => {
     }
   };
 
+  const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
+  const toggleSearch = useCallback(() => setIsSearchOpen(prev => !prev), []);
+
+  const SearchField = () => (
+    <form className="flex items-center relative" onSubmit={handleSearchSubmit}>
+      <Input
+        type="search"
+        placeholder="Search products..."
+        className="w-[200px] lg:w-[300px] rounded-full pl-9"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        aria-label="Search products"
+      />
+      <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
+      <Button type="submit" className="sr-only">Search</Button>
+    </form>
+  );
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
           {isMobile && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={toggleMenu}
+              aria-expanded={isMenuOpen}
               aria-label="Toggle menu"
             >
               <div className="space-y-1.5">
-                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "translate-y-2 rotate-45")}></div>
-                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "opacity-0")}></div>
-                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "-translate-y-2 -rotate-45")}></div>
+                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "translate-y-2 rotate-45")} />
+                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "opacity-0")} />
+                <div className={cn("h-0.5 w-6 bg-primary transition-all", isMenuOpen && "-translate-y-2 -rotate-45")} />
               </div>
             </Button>
           )}
@@ -53,6 +74,9 @@ const Navbar = () => {
               src="https://i.postimg.cc/MTHfXmpG/20250518-133009.png" 
               alt="KathGolap Logo" 
               className="h-6 sm:h-8 w-auto rounded-full border-2 border-primary/20 shadow-sm"
+              loading="lazy"
+              width={32}
+              height={32}
             />
             <h1 className="text-xl sm:text-2xl font-bold text-primary">KathGolap</h1>
           </Link>
@@ -60,61 +84,59 @@ const Navbar = () => {
 
         {!isMobile && (
           <nav className="mx-auto flex items-center gap-4">
-            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              to="/" 
+              className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}
+            >
               Home
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="link" className="text-sm font-medium hover:text-primary transition-colors">
+                <Button 
+                  variant="link" 
+                  className={`text-sm font-medium transition-colors ${location.pathname.startsWith('/category') ? 'text-primary' : 'hover:text-primary'}`}
+                >
                   Categories
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/category/fashion" className="w-full">Fashion</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/category/electronics" className="w-full">Electronics</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/category/others" className="w-full">Others</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/contact" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              to="/contact" 
+              className={`text-sm font-medium transition-colors ${isActive('/contact') ? 'text-primary' : 'hover:text-primary'}`}
+            >
               Contact
             </Link>
           </nav>
         )}
 
         <div className="flex items-center gap-4">
-          {!isMobile && (
-            <form className="flex items-center relative" onSubmit={handleSearchSubmit}>
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="w-[200px] lg:w-[300px] rounded-full pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-              <Button type="submit" className="sr-only">Search</Button>
-            </form>
-          )}
+          {!isMobile && <SearchField />}
           
           {isMobile && (
             <Button 
               variant="ghost" 
               size="icon" 
               aria-label="Search" 
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              aria-expanded={isSearchOpen}
+              onClick={toggleSearch}
             >
               <Search className="h-5 w-5" />
             </Button>
           )}
           
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" aria-label="Cart" className="relative">
+          <Link to="/cart" aria-label="Cart">
+            <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
               <span className="sr-only">Cart</span>
               {totalItems > 0 && (
@@ -128,24 +150,44 @@ const Navbar = () => {
       </div>
 
       {isMobile && isMenuOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-background border-b p-4 z-20">
+        <div className="absolute top-16 left-0 right-0 bg-background border-b p-4 z-20 animate-in fade-in slide-in-from-top-2">
           <div className="flex flex-col space-y-4">
-            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              to="/" 
+              onClick={toggleMenu}
+              className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-primary' : 'hover:text-primary'}`}
+            >
               Home
             </Link>
             <div className="flex flex-col space-y-2">
               <span className="text-sm font-medium">Categories</span>
-              <Link to="/category/fashion" className="text-xs sm:text-sm pl-4 hover:text-primary transition-colors">
+              <Link 
+                to="/category/fashion" 
+                onClick={toggleMenu}
+                className={`text-xs sm:text-sm pl-4 transition-colors ${location.pathname === '/category/fashion' ? 'text-primary' : 'hover:text-primary'}`}
+              >
                 Fashion
               </Link>
-              <Link to="/category/electronics" className="text-xs sm:text-sm pl-4 hover:text-primary transition-colors">
+              <Link 
+                to="/category/electronics" 
+                onClick={toggleMenu}
+                className={`text-xs sm:text-sm pl-4 transition-colors ${location.pathname === '/category/electronics' ? 'text-primary' : 'hover:text-primary'}`}
+              >
                 Electronics
               </Link>
-              <Link to="/category/others" className="text-xs sm:text-sm pl-4 hover:text-primary transition-colors">
+              <Link 
+                to="/category/others" 
+                onClick={toggleMenu}
+                className={`text-xs sm:text-sm pl-4 transition-colors ${location.pathname === '/category/others' ? 'text-primary' : 'hover:text-primary'}`}
+              >
                 Others
               </Link>
             </div>
-            <Link to="/contact" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link 
+              to="/contact" 
+              onClick={toggleMenu}
+              className={`text-sm font-medium transition-colors ${isActive('/contact') ? 'text-primary' : 'hover:text-primary'}`}
+            >
               Contact
             </Link>
           </div>
@@ -153,21 +195,8 @@ const Navbar = () => {
       )}
 
       {isMobile && isSearchOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-background border-b p-4 z-20">
-          <form className="flex items-center relative" onSubmit={handleSearchSubmit}>
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="w-full rounded-full pl-9 text-sm"
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-            <Button type="submit" variant="ghost" size="sm" className="absolute right-2 text-xs">
-              Search
-            </Button>
-          </form>
+        <div className="absolute top-16 left-0 right-0 bg-background border-b p-4 z-20 animate-in fade-in slide-in-from-top-2">
+          <SearchField />
         </div>
       )}
     </header>
