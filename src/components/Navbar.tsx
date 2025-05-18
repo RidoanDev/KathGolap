@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCart } from "@/context/CartContext";
 
@@ -36,6 +37,7 @@ const Navbar = () => {
             <img 
               src="https://i.postimg.cc/MTHfXmpG/20250518-133009.png" 
               alt="KathGolap Logo" 
+              className="h-6 sm:h-8 w-auto"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-primary">KathGolap</h1>
           </Link>
